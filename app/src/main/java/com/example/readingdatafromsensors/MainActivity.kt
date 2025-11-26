@@ -10,9 +10,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.collection.FloatList
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +27,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.AndroidViewModel
@@ -143,6 +150,41 @@ object Screen {
 }
 
 @Composable
+fun DrawingChart(data: List<Float>, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        if (data.isEmpty()) {
+            return@Canvas
+        }
+
+        val max = data.maxOrNull() ?: 0f
+        val min = data.minOrNull() ?: 0f
+
+        val range = (max - min).coerceAtLeast(1f)
+        val path = Path()
+
+        data.forEachIndexed {
+            index, value ->
+            val x = index * 10f
+
+            val normalizedVal = (value - min) / range
+            val y = size.height - (normalizedVal * size.height)
+
+            if (index == 0) {
+                path.moveTo(x, y)
+            } else {
+                path.lineTo(x, y)
+            }
+
+            drawPath(
+                path = path,
+                color = Color.Green,
+                style = Stroke(width = 3.dp.toPx())
+            )
+        }
+    }
+}
+
+@Composable
 fun StartScreen(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val viewModel : SensorViewModel = viewModel()
@@ -232,6 +274,10 @@ fun FirstScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        DrawingChart(
+            pressureList,
+            Modifier.height(150.dp).fillMaxWidth()
+        )
 
         val currentPressure = pressureList.lastOrNull() ?: 0f
         Text(text = "Pressure sensor, the current pressure is: $currentPressure hPa")
@@ -253,6 +299,11 @@ fun SecondScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        DrawingChart(
+            temperatureList,
+            Modifier.height(150.dp).fillMaxWidth()
+        )
+
         val currentTemperature = temperatureList.lastOrNull() ?: 0f
 
         Text(text = "Current temperature is: $currentTemperature C")
@@ -274,6 +325,11 @@ fun ThirdScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        DrawingChart(
+            lightList,
+            Modifier.height(150.dp).fillMaxWidth()
+        )
+
         val currentLight = lightList.lastOrNull() ?: 0f
 
         Text(text = "The current light reading is: $currentLight lx")
